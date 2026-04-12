@@ -182,20 +182,16 @@ path is O(1) per jail, not O(bans)).
 
 ### Option A — standalone shell installer
 
-One-liner (inspect the URL first — this is your sshd banner, not a weather widget):
-
-```bash
-curl -fsSL https://raw.githubusercontent.com/EXT-IT/motd/main/install.sh \
-  | sudo bash -s -- --company-name "Acme Corp" --contact "ops@acme.example"
-```
-
-Manual clone — recommended for any host you plan to re-provision:
-
 ```bash
 git clone https://github.com/EXT-IT/motd.git
 cd motd
 sudo ./install.sh --company-name "Acme Corp" --contact "ops@acme.example"
 ```
+
+> **Why no `curl | bash` one-liner?** The installer needs the runtime MOTD
+> script (`motd/10-system-info.sh`) from the repo directory. A piped install
+> cannot access sibling files, so a full clone (or tarball extraction) is
+> required.
 
 Preview everything without touching disk:
 
