@@ -1,0 +1,290 @@
+# =============================================================================
+# motd — unified configuration file (example)
+# -----------------------------------------------------------------------------
+# This file is PARSED (never sourced) by:
+#   - install.sh         (when given via --config or auto-loaded from
+#                         /etc/motd.conf if no --config is provided)
+#   - the runtime MOTD script /etc/update-motd.d/10-system-info
+#
+# Both readers use a whitelist KEY=VALUE regex parser that rejects shell
+# expansion metacharacters ($ ` \ "). This is deliberate: an earlier
+# revision called `. /etc/motd.conf` as root on every SSH login via
+# pam_motd, which turned the file into a direct local-code-execution
+# vector. See the trust-boundary comment block at the top of install.sh
+# and motd/10-system-info.sh for the full rationale. Do NOT re-introduce
+# `source` on this file — it will re-open that vulnerability.
+#
+# It is a shell-style key=value file. Only whitelisted keys are honoured;
+# anything else is ignored. Quote any value containing spaces.
+#
+# Default install location: /etc/motd.conf
+#
+# Precedence (highest wins): CLI flags > environment variables > this file
+# > built-in defaults.
+#
+# Parser quirks (documented for clarity):
+#   * Leading whitespace on a KEY line is stripped before parsing, so
+#     `  COMPANY_NAME="Acme"` and `COMPANY_NAME="Acme"` are equivalent.
+#   * Duplicate keys: the LAST occurrence wins. There is no warning for
+#     duplicates; an editor that auto-adds an entry near the bottom of
+#     the file will silently override an earlier value.
+#   * Inline `# comment` after a value is supported only when the value
+#     itself is quoted: `KEY="value"  # comment`. An unquoted value with
+#     a trailing `#` is parsed as part of the value.
+#   * Lines that don't match the whitelist are silently ignored — they
+#     are NOT errors. Useful for keeping commented-out alternative
+#     values right next to the active one.
+#
+# License: Apache-2.0    (c) 2026 EXT IT GmbH
+# Homepage: https://github.com/EXT-IT/motd
+# =============================================================================
+
+
+# ===========================================================================
+#                                BANNER KEYS
+# ===========================================================================
+# These keys control the pre-login warning banner written to /etc/issue
+# (ASCII) and /etc/issue.net (Unicode). They have no effect on the
+# post-login MOTD.
+
+# ---------------------------------------------------------------------------
+# Identification
+# ---------------------------------------------------------------------------
+
+# Name of the operating company/owner. Shown in the "property of" line of
+# the banner AND in the MOTD header box. Max 64 printable characters.
+# Control characters and ANSI escapes are rejected at install time.
+COMPANY_NAME="Acme Corp"
+
+# Optional contact line. Rendered as "Contact: <value>" immediately
+# before the statute line in the banner. Leave empty to omit the line
+# entirely.
+#CONTACT=""
+CONTACT="ops@acme.example"
+
+# ---------------------------------------------------------------------------
+# Localisation
+# ---------------------------------------------------------------------------
+
+# Language for the preset warning lines. Allowed: en | de
+#LANGUAGE="en"
+
+# Box style for /etc/issue.net. Allowed:
+#   double  ╔═╗║╚═╝   (recommended — best visual in UTF-8 terminals)
+#   single  ┌─┐│└─┘
+#   ascii   +=|       (portable — use when Unicode rendering is unreliable)
+# /etc/issue is always flat ASCII regardless of this setting.
+#STYLE="double"
+
+# Minimum width of the banner box, in characters. Auto-grows if the
+# longest line would otherwise overflow (max 120 — longer lines are
+# truncated with "..." and a warning is emitted).
+#MIN_WIDTH=56
+
+# ---------------------------------------------------------------------------
+# Legal citation
+# ---------------------------------------------------------------------------
+# The citation appears as the final line inside the box, rendered as:
+#     Violations prosecuted under <STATUTE>.
+#
+# Two variants are needed because /etc/issue (local console) must be
+# pure ASCII (boot consoles may not have a UTF-8 font loaded), while
+# /etc/issue.net (SSH) can use the § sign and other Latin-1 punctuation.
+#
+# For German-operated infrastructure, BSI IT-Grundschutz SYS.1.3.M6 and
+# US-CFAA case law both ask for a specific statute citation, not just
+# generic "no unauthorised access" wording.
+#
+# Set both to empty strings to suppress the statute line entirely.
+#STATUTE="§202a StGB"
+#STATUTE_ASCII="section 202a StGB"
+
+# ---------------------------------------------------------------------------
+# Custom warning lines (override the language preset)
+# ---------------------------------------------------------------------------
+# Optional: replace the EN/DE preset warning lines (the four lines that
+# precede CONTACT and STATUTE inside the box) with a verbatim list of
+# your own. Useful when corporate legal needs a specific wording that
+# does not match either preset.
+#
+# Format: a SINGLE-quoted shell scalar, with literal \n (backslash + n)
+# as the line separator. The double-quoted form would NOT work — the
+# config-file parser rejects backslash inside double-quoted values to
+# keep its quoting contract simple. Single-quoted literals pass it
+# through. Per-line cap is 128 chars; single quote, shell metacharacters
+# ($ ` " \), control characters, and emoji are rejected at install time.
+#
+# CLI equivalent (1:1 with the salt pillar warning_lines_override):
+#     install.sh --warning-lines "Line 1" --warning-lines "Line 2"
+# CLI > config > preset; setting both gives CLI the win.
+#
+#WARNING_LINES_OVERRIDE='WARNING: Authorized access only.\nThis system is property of Acme Corp.\nUnauthorized access is strictly prohibited.\nAll connections are monitored and logged.'
+
+# ---------------------------------------------------------------------------
+# File locations
+# ---------------------------------------------------------------------------
+
+# Local-console banner (pure ASCII)
+#ISSUE_FILE="/etc/issue"
+
+# SSH banner (Unicode; referenced by sshd_config Banner directive)
+#ISSUE_NET_FILE="/etc/issue.net"
+
+# ---------------------------------------------------------------------------
+# Phase toggles — CLI only
+# ---------------------------------------------------------------------------
+# The banner / MOTD / sshd-banner phase toggles are CLI-only. They were
+# intentionally removed from this file to stop a one-off `--motd-only`
+# install from silently disabling the banner for every subsequent run
+# (the config would otherwise be read back on the next install and
+# override the defaults, long after the operator's original intent).
+#
+# Use these flags instead:
+#     --no-banner        skip the pre-login banner phase
+#     --no-motd          skip the post-login MOTD phase
+#     --no-sshd-banner   stage /etc/issue.net but don't wire it into sshd
+#     --banner-only      alias for "--no-motd"     (banner + sshd wiring)
+#     --motd-only        alias for "--no-banner --no-sshd-banner"
+
+# Blank out /etc/motd before the MOTD phase runs. The dynamic MOTD is
+# composed by pam_motd from /etc/update-motd.d/* — the static /etc/motd
+# is additive. Most distros ship a stale /etc/motd; the default is to
+# clear it.
+#CLEAR_MOTD=true
+
+
+# ===========================================================================
+#                                 MOTD KEYS
+# ===========================================================================
+# These keys control the dynamic post-login MOTD installed under
+# /etc/update-motd.d/10-system-info. They are read by both the installer
+# and the runtime script. All have safe defaults — a missing key is
+# never fatal.
+
+# (The MOTD_ENABLED phase toggle is CLI-only — see the "Phase toggles
+# — CLI only" comment block above.)
+
+# ---------------------------------------------------------------------------
+# Branding
+# ---------------------------------------------------------------------------
+
+# Subtitle appended to COMPANY_NAME inside the MOTD header box. The
+# leading space is intentional and gives the visual " · Production"
+# separator most operators expect. Set to "" to render bare.
+#MOTD_SUBTITLE=" · Managed Server"
+
+# Minimum inner width of the MOTD header box. Auto-grows to fit
+# COMPANY_NAME + MOTD_SUBTITLE + 4 chars of breathing room.
+#MOTD_MIN_WIDTH=54
+
+# Optional dim line at the very bottom of the MOTD. Empty by default
+# so the script stays silent about who provisioned the host. Typical
+# values: "Managed by Ansible.", "Provisioned by Terraform.",
+# "Managed by Salt.".
+#MOTD_FOOTER=""
+
+# ---------------------------------------------------------------------------
+# Verbosity
+# ---------------------------------------------------------------------------
+
+# When true, show kernel version + public IP probe in the MOTD.
+# Default false because CIS Ubuntu 24.04 L1 §1.7.x asks for kernel and
+# OS version to stay out of the post-auth surface, and the public-IP
+# probe is a 1-hour-cached round trip that isn't free.
+#MOTD_VERBOSE=false
+
+# ---------------------------------------------------------------------------
+# Section visibility
+# ---------------------------------------------------------------------------
+# Each section is independent. When a section is off, its gathering
+# code is skipped too — saves hot-path cycles on hosts that don't care.
+
+# Services line + Security block + "Currently banned" detail. Off makes
+# sense on hosts that run none of the surfaced daemons (fail2ban,
+# Wazuh, NetBird, Docker, 30+ others) and want a leaner display.
+#MOTD_SHOW_SERVICES=true
+
+# "Updates: N package(s) available" line. Off makes sense on hosts
+# with fully automated upgrades where the count is irrelevant.
+#MOTD_SHOW_UPDATES=true
+
+# Recent Logins block, scoped to the CURRENT user only (never
+# fleet-wide — that leaks cross-admin movement patterns).
+#MOTD_SHOW_RECENT_LOGINS=true
+
+# ---------------------------------------------------------------------------
+# Security block privilege gating
+# ---------------------------------------------------------------------------
+# When true, the Security section (fail2ban state, blocklist size,
+# Wazuh health, running-security-tool state) and the Currently-banned
+# detail block are only rendered for users that are members of the
+# sudo, wheel, or admin group. Non-privileged users get a slimmed MOTD
+# with the Services one-liner but none of the detail blocks.
+#
+# Use case: shared bastion / jump host where you do not want every SSH
+# session (including CI service accounts and non-admin operators) to
+# see the fail2ban blocklist or the Wazuh running state. Leave at
+# false on single-admin VMs — the post-auth security surface is useful
+# context for every shell there.
+#
+# CLI equivalent: --motd-security-priv-only
+# Salt pillar:    login_banner:motd:security_priv_only
+#MOTD_SECURITY_PRIV_ONLY=false
+
+# ---------------------------------------------------------------------------
+# Public IP probe + cache
+# ---------------------------------------------------------------------------
+
+# Endpoint hit when MOTD_VERBOSE=true. Wrapped in `curl --max-time 2`,
+# cached for 1 hour, sanitised via charset whitelist on read. Proxmox
+# hosts skip the probe entirely (typically no public default route).
+#MOTD_PUBIP_URL="https://ifconfig.me"
+
+# Where the runtime script lives. Standard pam_motd hook is
+# /etc/update-motd.d/. Numbered prefix (10-) sorts before any other
+# motd snippets.
+#MOTD_SCRIPT_PATH="/etc/update-motd.d/10-system-info"
+
+# Where the runtime script reads its config from. Both installer and
+# runtime use this same key, so the install path and the runtime read
+# path can never drift.
+#MOTD_CONFIG_PATH="/etc/motd.conf"
+
+# Root-owned cache directory. NEVER point this at a user-writable path
+# (/tmp, /var/tmp, /dev/shm) — the public IP cache would become an LPE
+# vector via pre-planted ANSI escape sequences.
+#MOTD_CACHE_DIR="/var/cache/motd"
+
+
+# ===========================================================================
+#                            sshd INTEGRATION KEYS
+# ===========================================================================
+#
+# The SSHD_BANNER_MANAGE phase toggle is CLI-only (use --no-sshd-banner
+# to skip wiring /etc/issue.net into sshd) — see the "Phase toggles —
+# CLI only" comment block further up.
+
+# Path of the drop-in file. The "99-" prefix makes the file the LAST
+# config file sshd reads, so any earlier Banner directive is
+# overridden. Only used when sshd_config has an Include directive.
+#SSHD_BANNER_DROPIN="/etc/ssh/sshd_config.d/99-motd-banner.conf"
+
+# Ask sshd to re-read its config after writing /etc/issue.net or the
+# drop-in. Does NOT disconnect existing sessions — only affects new
+# logins.
+#SSHD_RELOAD=true
+
+
+# ===========================================================================
+#                                  BACKUPS
+# ===========================================================================
+
+# Backup any existing /etc/issue, /etc/issue.net, /etc/motd, the MOTD
+# script, the unified config file, and the sshd drop-in before
+# overwriting. Backups are timestamped, mode 0600, and a .latest.bak
+# symlink always points at the most recent copy.
+#BACKUP=true
+
+# Where backups go. Must be an absolute path. Created with mode 0700
+# on first backup.
+#BACKUP_DIR="/var/backups/motd"

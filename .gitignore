@@ -1,0 +1,36 @@
+# Editor state
+*.swp
+*.swo
+.idea/
+.vscode/
+*~
+.DS_Store
+Thumbs.db
+
+# Shell / build artifacts
+*.log
+*.bak
+*.tmp
+/build/
+/dist/
+
+# Local config that should never be committed
+/banner.conf
+/motd.conf
+/.env
+/.env.local
+
+# Python (in case test harness is added later)
+__pycache__/
+*.pyc
+.venv/
+venv/
+.pytest_cache/
+.mypy_cache/
+
+# Coverage
+.coverage
+htmlcov/
+
+# Salt rendered output caches
+/cache/
