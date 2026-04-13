@@ -238,6 +238,20 @@ CONTACT="ops@acme.example"
 # Endpoint hit when MOTD_VERBOSE=true. Wrapped in `curl --max-time 2`,
 # cached for 1 hour, sanitised via charset whitelist on read. Proxmox
 # hosts skip the probe entirely (typically no public default route).
+#
+# Privacy / compliance note: the default endpoint (ifconfig.me) is a
+# third-party service. Enabling MOTD_VERBOSE=true therefore implies a
+# 1×/hour outbound HTTPS call to a vendor you do not control. To keep
+# verbose mode (kernel version) WITHOUT the public-IP probe, set this
+# value to the empty string — the probe is then skipped entirely (no
+# curl spawn, no network call, no DNS lookup):
+#
+#   MOTD_PUBIP_URL=""
+#
+# To self-host the probe, point this at any endpoint that returns a
+# bare IP in its response body. The response is run through a
+# `[0-9a-fA-F:.]` whitelist before display, so terminal-escape
+# injection by a compromised endpoint is not possible.
 #MOTD_PUBIP_URL="https://ifconfig.me"
 
 # Where the runtime script lives. Standard pam_motd hook is

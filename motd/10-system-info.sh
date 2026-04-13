@@ -357,8 +357,12 @@ IPS=$(ip -o -4 addr show 2>/dev/null \
 # escape sequences and have the next admin's terminal interpret them.
 # Proxmox hosts are skipped entirely: they typically run with no public
 # default route, so the curl call would always hit `--max-time 2`.
+# Setting MOTD_PUBIP_URL="" disables the probe outright while still
+# allowing MOTD_VERBOSE=true to render the kernel version — useful in
+# air-gapped, KRITIS, or privacy-regulated environments where the
+# default `ifconfig.me` round-trip is unacceptable.
 PUBIP=""
-if [ "$MOTD_VERBOSE" = "true" ] && ! command -v pveversion &>/dev/null; then
+if [ "$MOTD_VERBOSE" = "true" ] && [ -n "$MOTD_PUBIP_URL" ] && ! command -v pveversion &>/dev/null; then
   PUBIP_CACHE="${MOTD_CACHE_DIR}/pubip"
   sanitize_ip() { tr -dc '0-9a-fA-F:.' | head -c 64; }
   if [ -f "$PUBIP_CACHE" ] && find "$PUBIP_CACHE" -mmin -60 2>/dev/null | grep -q .; then
