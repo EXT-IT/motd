@@ -706,24 +706,26 @@ _sanitise_text() {
 _is_printable_safe() {
     # Accept printable characters only — reject:
     #   * C0 control bytes (0x00–0x1F) and DEL (0x7F)
-    #   * Invalid UTF-8 sequences, including standalone C1 control bytes
-    #     (0x80–0x9F) that are NOT part of a valid multi-byte sequence
+    #   * Standalone C1 bytes (0x80–0x9F not part of a valid UTF-8 seq)
+    #   * UTF-8-encoded C1 codepoints (U+0080–U+009F = 0xC2 0x80–0x9F)
+    #   * Any other invalid UTF-8 sequence
     #
-    # The C1 check is necessary because bytes in 0x80–0x9F have two
-    # legitimate meanings on a *nix host:
-    #   1. UTF-8 continuation bytes inside a multi-byte sequence (legit)
-    #   2. 8-bit C1 control codes left over from ISO-8859-* (NOT legit
-    #      on a UTF-8 system, AND interpreted by xterm as escape codes
-    #      when `allowC1Printable: true` is set — 0x9B is the single-byte
-    #      CSI starter, equivalent to `ESC [`)
+    # C1 codes have two routes onto a host and BOTH must be blocked:
+    #   1. Standalone 0x80–0x9F (legacy ISO-8859 leakage). Not valid
+    #      UTF-8; caught by the iconv round-trip below.
+    #   2. UTF-8-encoded U+0080–U+009F (0xC2 0x80–0x9F). IS valid UTF-8,
+    #      so iconv passes them through untouched. Must be rejected
+    #      explicitly — see the dedicated check after the round-trip.
     #
-    # Strategy: round-trip the input through `iconv -c -f UTF-8 -t UTF-8`.
-    # The `-c` flag tells iconv to silently DROP invalid byte sequences
-    # instead of aborting, so a standalone 0x9B disappears from the
-    # output while a legitimate ä (0xC3 0xA4) round-trips byte-identical.
-    # Comparing input vs roundtrip catches any drop. iconv ships with
-    # both glibc and musl, and busybox v1.30+ includes an iconv applet,
-    # so this works on every distro this installer targets.
+    # Why this matters: 0x9B is the 8-bit CSI starter (equivalent to
+    # `ESC [`), 0x9D is the OSC starter. xterm, VTE, and Windows
+    # Terminal with `allowC1Printable: true` interpret these as
+    # escape-sequence prefixes — written into /etc/issue.net (sshd
+    # Banner), they become a pre-auth terminal-injection vector.
+    #
+    # Mirror of salt/banner.sls _bytes-based check (banner.sls:166-167),
+    # which gets the C1 case right — the bash and Salt paths must agree
+    # byte-for-byte on which inputs are accepted.
     local s="$1"
     [[ -z "$s" ]] && return 0
     # Cheap pure-bash C0/DEL filter — runs even when iconv is
@@ -731,8 +733,26 @@ _is_printable_safe() {
     local stripped
     stripped="$(LC_ALL=C printf '%s' "$s" | LC_ALL=C tr -d '\000-\037\177')"
     [[ "$stripped" == "$s" ]] || return 1
-    # iconv round-trip — primary defence against standalone C1 bytes and
-    # any other malformed UTF-8 sequence.
+    # Reject UTF-8-encoded C1 control codepoints (U+0080–U+009F encoded
+    # as 0xC2 0x80–0x9F). These are valid UTF-8, so iconv would accept
+    # them — only this explicit byte-pair check stops them.
+    #
+    # The check runs in a subshell with LC_ALL=C to force byte-mode
+    # regex interpretation. Under C.UTF-8 / en_US.UTF-8 the bracket
+    # expression `[$'\x80'-$'\x9f']` is parsed as a *codepoint* range
+    # (and bash refuses to compile it: "illegal byte sequence"),
+    # silently turning the check into a no-op — exactly the failure
+    # mode this defence exists to prevent. Forcing LC_ALL=C makes the
+    # range a byte range, which is what we want.
+    #
+    # Legitimate U+00A0–U+00BF (©, ®, °, ±, …) all encode as 0xC2 0xA0
+    # or higher, outside the C1 range, so this filter does not touch
+    # any printable Latin-1-supplement character.
+    if (LC_ALL=C; [[ "$s" =~ $'\xc2'[$'\x80'-$'\x9f'] ]]); then
+        return 1
+    fi
+    # iconv round-trip — catches standalone C1 bytes and any other
+    # malformed UTF-8 sequence.
     if command -v iconv >/dev/null 2>&1; then
         local roundtrip
         roundtrip="$(LC_ALL=C.UTF-8 printf '%s' "$s" | LC_ALL=C.UTF-8 iconv -c -f UTF-8 -t UTF-8 2>/dev/null)" || return 1
