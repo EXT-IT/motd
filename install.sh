@@ -167,7 +167,13 @@ MOTD_SHOW_RECENT_LOGINS="${MOTD_SHOW_RECENT_LOGINS:-true}"
 # legacy behaviour). Mirrored by the Salt pillar
 # `login_banner:motd:security_priv_only`.
 MOTD_SECURITY_PRIV_ONLY="${MOTD_SECURITY_PRIV_ONLY:-false}"
-MOTD_PUBIP_URL="${MOTD_PUBIP_URL:-https://ifconfig.me}"
+# `${var-default}` (no colon): fall back to the default only when the
+# variable is *unset*, not when it is set to an empty string. The
+# documented opt-out path is `MOTD_PUBIP_URL=""` (env, CLI, or
+# /etc/motd.conf), and that explicit empty value must survive the
+# defaulting step — otherwise the runtime guard in 10-system-info.sh
+# never sees a chance to skip the probe.
+MOTD_PUBIP_URL="${MOTD_PUBIP_URL-https://ifconfig.me}"
 MOTD_SCRIPT_PATH="${MOTD_SCRIPT_PATH:-/etc/update-motd.d/10-system-info}"
 MOTD_CONFIG_PATH="${MOTD_CONFIG_PATH:-/etc/motd.conf}"
 MOTD_CACHE_DIR="${MOTD_CACHE_DIR:-/var/cache/motd}"

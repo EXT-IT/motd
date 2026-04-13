@@ -181,7 +181,13 @@ MOTD_SUBTITLE="${MOTD_SUBTITLE:- · Managed Server}"
 MOTD_VERBOSE="${MOTD_VERBOSE:-false}"
 MOTD_FOOTER="${MOTD_FOOTER:-}"
 MOTD_MIN_WIDTH="${MOTD_MIN_WIDTH:-54}"
-MOTD_PUBIP_URL="${MOTD_PUBIP_URL:-https://ifconfig.me}"
+# `${var-default}` (no colon): fall back to the default only when the
+# variable is *unset*, not when it is set to an empty string. An
+# operator who wrote MOTD_PUBIP_URL="" in /etc/motd.conf is opting out
+# of the probe (see motd.conf.example for the full rationale); using
+# `:-` here would silently re-arm the default and the empty-string
+# guard further down would never trigger.
+MOTD_PUBIP_URL="${MOTD_PUBIP_URL-https://ifconfig.me}"
 MOTD_CACHE_DIR="${MOTD_CACHE_DIR:-/var/cache/motd}"
 MOTD_SHOW_SERVICES="${MOTD_SHOW_SERVICES:-true}"
 MOTD_SHOW_UPDATES="${MOTD_SHOW_UPDATES:-true}"
