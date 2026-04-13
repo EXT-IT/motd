@@ -43,6 +43,12 @@ IFS=$'\n\t'
 # It does NOT fire inside `if`, `while`, `&&`, `||` conditions — only on
 # genuinely unexpected failures. Output goes to stderr to stay visible even
 # when stdout is redirected (e.g. inside a pipeline / process substitution).
+#
+# ShellCheck SC2154: `_rc` is assigned by the trap body itself at fire time.
+# The trap is a lazily-evaluated single-quoted string, so SC cannot see the
+# in-string assignment and reports a false positive. Runtime behaviour is
+# correct: $? is captured into _rc before any subsequent command touches it.
+# shellcheck disable=SC2154
 trap '_rc=$?; printf "[ERR] %s:%s: command \"%s\" exited with %d\n" \
     "${BASH_SOURCE[0]}" "${LINENO}" "${BASH_COMMAND}" "$_rc" >&2' ERR
 
