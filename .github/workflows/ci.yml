@@ -1,0 +1,62 @@
+name: CI
+
+"on":
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  lint:
+    name: Lint (shellcheck + yamllint)
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683  # v4.2.2
+
+      - name: Install shellcheck and yamllint
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends shellcheck yamllint
+
+      - name: ShellCheck (all shell scripts)
+        run: |
+          shellcheck \
+            install.sh \
+            uninstall.sh \
+            motd/10-system-info.sh \
+            tests/test_c1_injection.sh \
+            tests/test_pubip_optout.sh
+
+      - name: yamllint
+        run: |
+          yamllint -d '{extends: default, rules: {line-length: {max: 120}, document-start: disable}}' .
+
+  test:
+    name: Tests (ubuntu-latest)
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683  # v4.2.2
+
+      - name: Show bash version
+        run: bash --version
+
+      - name: Ensure test scripts are executable
+        run: chmod +x tests/test_c1_injection.sh tests/test_pubip_optout.sh
+
+      - name: Run C1 injection test
+        run: ./tests/test_c1_injection.sh
+
+      - name: Run public-IP opt-out test
+        run: ./tests/test_pubip_optout.sh

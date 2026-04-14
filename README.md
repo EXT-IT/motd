@@ -6,6 +6,7 @@
 
 [![License: Apache 2.0](https://img.shields.io/badge/license-Apache%202.0-blue.svg)](LICENSE)
 [![Version](https://img.shields.io/badge/version-1.0.1-green.svg)](CHANGELOG.md)
+[![CI](https://img.shields.io/github/actions/workflow/status/EXT-IT/motd/ci.yml?branch=main&style=flat&label=CI)](https://github.com/EXT-IT/motd/actions/workflows/ci.yml)
 [![Shell](https://img.shields.io/badge/shell-bash%204%2B-lightgrey.svg)](install.sh)
 [![Salt](https://img.shields.io/badge/salt-3006%20LTS-1bacd8.svg)](salt/)
 [![Platforms](https://img.shields.io/badge/platforms-Debian%20%7C%20Ubuntu%20%7C%20RHEL%20%7C%20Alma%20%7C%20Rocky%20%7C%20Fedora-orange.svg)](#-requirements)
