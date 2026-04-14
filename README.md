@@ -5,7 +5,7 @@
 **A pre-login warning banner _and_ a dynamic post-login MOTD for Linux — from one config, in one install.**
 
 [![License: Apache 2.0](https://img.shields.io/badge/license-Apache%202.0-blue.svg)](LICENSE)
-[![Version](https://img.shields.io/badge/version-1.0.0-green.svg)](CHANGELOG.md)
+[![Version](https://img.shields.io/badge/version-1.0.1-green.svg)](CHANGELOG.md)
 [![Shell](https://img.shields.io/badge/shell-bash%204%2B-lightgrey.svg)](install.sh)
 [![Salt](https://img.shields.io/badge/salt-3006%20LTS-1bacd8.svg)](salt/)
 [![Platforms](https://img.shields.io/badge/platforms-Debian%20%7C%20Ubuntu%20%7C%20RHEL%20%7C%20Alma%20%7C%20Rocky%20%7C%20Fedora-orange.svg)](#-requirements)
@@ -14,7 +14,7 @@
 
 <sub><b>pre-login warning · dynamic system-info dashboard · zero runtime deps · Salt + standalone from one schema</b></sub>
 
-Version: **v1.0.0** — see the [CHANGELOG](CHANGELOG.md) for release notes.
+Version: **v1.0.1** — see the [CHANGELOG](CHANGELOG.md) for release notes.
 
 </div>
 

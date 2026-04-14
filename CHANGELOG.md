@@ -5,6 +5,54 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.1] — 2026-04-14
+
+Patch release. Two security-relevant fixes and two minor polish items. No
+behaviour change for operators on default settings.
+
+### Security
+
+- Reject UTF-8-encoded C1 control bytes (`0xC2 0x80`–`0xC2 0x9F`, i.e.
+  `U+0080`–`U+009F`) in operator-settable banner fields (`COMPANY_NAME`,
+  `CONTACT`, `MOTD_SUBTITLE`, …). The previous printable-safe check ran
+  after an `iconv` round-trip that left valid-UTF-8 C1 encodings intact —
+  allowing `0x9B` (CSI) / `0x9D` (OSC) to land in `/etc/issue.net` and
+  trigger pre-auth ANSI/OSC injection on terminals with
+  `allowC1Printable: true`. The reject runs in a subshell under
+  `LC_ALL=C` so byte-mode regex works regardless of the caller's locale.
+  Restores 1:1 parity with the Salt path (`salt/banner.sls`).
+
+### Fixed
+
+- `MOTD_PUBIP_URL=""` now actually disables the public-IP probe. The
+  defaulting line previously used `${VAR:-default}`, which substitutes
+  the default on *unset OR empty* — so an explicit empty-string opt-out
+  (documented in `motd.conf.example` as one of three ways to turn the
+  probe off) was silently overwritten with `ifconfig.me` before the
+  runtime guard could see it. The fix switches both the installer and
+  the runtime script to `${VAR-default}` (no colon), falling back only
+  when the variable is *unset* and preserving explicit empty-string
+  opt-out. Same semantics as the Salt path, which uses
+  `pillar.get` with a default that fires only on key-absence.
+- Quickstart instructions replaced the broken `curl | bash` one-liner
+  with `git clone` — the installer needs `motd/10-system-info.sh` from
+  the repo directory, which is unreachable when piped from stdin.
+
+### Chore
+
+- Silence ShellCheck `SC2154` false-positive in the installer's `ERR`
+  trap.
+
+### Tests
+
+- New regression suites:
+  - `tests/test_c1_injection.sh` — 11 black-box cases covering the C1
+    control-byte reject. Locale-independent, no root needed.
+  - `tests/test_pubip_optout.sh` — 4-layer regression covering the
+    installer, the runtime defaulting line (extracted from source by
+    `grep` so the test tracks the file), and the underlying
+    bash-semantics contract. 6/6 pass.
+
 ## [1.0.0] — 2026-04-12
 
 First public release. `motd` ships both halves of the login UX — the pre-auth
@@ -243,4 +291,5 @@ single SaltStack formula driven by one unified configuration schema.
 - Apache License 2.0 with a populated copyright notice
   (EXT IT GmbH, 2026).
 
+[1.0.1]: https://github.com/EXT-IT/motd/releases/tag/v1.0.1
 [1.0.0]: https://github.com/EXT-IT/motd/releases/tag/v1.0.0

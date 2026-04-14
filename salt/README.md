@@ -1,6 +1,6 @@
 # motd (Salt)
 
-Version: **v1.0.0** — see the top-level [`README.md`](../README.md) for the
+Version: **v1.0.1** — see the top-level [`README.md`](../README.md) for the
 project overview and [`CHANGELOG.md`](../CHANGELOG.md) for release notes.
 
 Standards-compliant login banner **and** post-login dynamic MOTD for Linux

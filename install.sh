@@ -84,7 +84,7 @@ export LANG="$LC_ALL"
 # `set -e` active, the failing subshell kills the whole installer
 # silently — the single worst failure mode for a first-impression
 # public release. Use MOTD_VERSION throughout.
-readonly MOTD_VERSION="1.0.0"
+readonly MOTD_VERSION="1.0.1"
 readonly PROG_NAME="motd"
 readonly PROJECT_URL="https://github.com/EXT-IT/motd"
 

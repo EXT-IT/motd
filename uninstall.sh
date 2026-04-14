@@ -53,7 +53,7 @@ export LANG="$LC_ALL"
 # Linux distro's /etc/os-release defines a `VERSION=` line. A
 # readonly VERSION here would propagate into any subshell that
 # sources /etc/os-release and fail silently under `set -e`.
-readonly MOTD_VERSION="1.0.0"
+readonly MOTD_VERSION="1.0.1"
 readonly PROG_NAME="motd-uninstall"
 readonly PROJECT_URL="https://github.com/EXT-IT/motd"
 
